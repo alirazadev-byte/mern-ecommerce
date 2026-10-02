@@ -2,10 +2,16 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "indx.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "nodemon server.js",
-    "test:vendor-ownership": "node --test tests/vendorProductService.test.js tests/vendorProductValidation.test.js tests/roleAuthorization.test.js"
+    "dev": "tsx watch server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:vendor-ownership": "tsx --test tests/vendorProductService.test.js tests/vendorProductValidation.test.js tests/roleAuthorization.test.js",
+    "test:catalog": "tsx --test tests/catalogValidation.test.ts tests/catalogQueryShape.test.ts",
+    "test": "tsx --test tests/vendorProductService.test.js tests/vendorProductValidation.test.js tests/roleAuthorization.test.js tests/catalogValidation.test.ts tests/catalogQueryShape.test.ts",
+    "migrate:catalog": "tsx scripts/migrateCatalogInventory.ts"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +38,17 @@
     "stripe": "^15.8.0"
   },
   "devDependencies": {
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.2",
+    "@types/node": "^22.10.1",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/cookie-parser": "^1.4.7",
+    "@types/morgan": "^1.9.9",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/bcrypt": "^5.0.2",
+    "@types/body-parser": "^1.19.5",
+    "@types/multer": "^1.4.12"
   }
 }
