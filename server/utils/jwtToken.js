@@ -1,20 +1,12 @@
+const cookieOptions = require("./cookieOptions");
+
 const sendToken = (user, statusCode, res) => {
-    // if (!statusCode) {
-    //     console.error('sendToken called without statusCode');
-    //     statusCode = 500; 
-    // }
+  const token = user.generateJWT();
 
-    const token = user.generateJWT();
-    const options = {
-        expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-        httpOnly: true,
-    };
-
-    res.status(statusCode).cookie("token", token, options).json({
-        success: true,
-        user,
-        token,
-    });
+  res.status(statusCode).cookie("token", token, cookieOptions()).json({
+    success: true,
+    user,
+  });
 };
 
 module.exports = sendToken;

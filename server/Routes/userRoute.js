@@ -13,7 +13,7 @@ const sendToken = require("../utils/jwtToken");
 const asyncHandler = require("../middlewares/Catachasyncerror");
 const { error } = require("console");
 const ErrorHandler = require("../utils/Errorhandler");
-const { isAuthenticated } = require("../middlewares/Auth");
+const { isAuthenticated, isSeller, authorizeRoles } = require("../middlewares/Auth");
 const Catachasyncerror = require("../middlewares/Catachasyncerror");
 const Product = require("../models/ProductModel");
 // Create activation token
@@ -29,14 +29,14 @@ const uploadMultiple = multer({ storage });
 
 
 cloudinary.config({
-  cloud_name: "dseka2tse",
-  api_key: 877837198654451,
-  api_secret: "BzjMyOVJ_RhVuTOej8l3uIM2sIU",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 
 // All Users Details
-userRoutes.get("/all-users-record", asyncHandler(async (req, res) => {
+userRoutes.get("/all-users-record", isAuthenticated, authorizeRoles("admin"), asyncHandler(async (req, res) => {
   try {
     const users = await Auth.find();
     res.status(200).json({ success: true, users });
@@ -45,7 +45,7 @@ userRoutes.get("/all-users-record", asyncHandler(async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 }));
-userRoutes.delete("/user/:id", asyncHandler(async (req, res) => {
+userRoutes.delete("/user/:id", isAuthenticated, authorizeRoles("admin"), asyncHandler(async (req, res) => {
   try {
     const user = await Auth.findByIdAndDelete(req.params.id);
     if (!user) {
@@ -64,7 +64,7 @@ userRoutes.post(
   async (req, res, next) => {
     const { name, email, password } = req.body;
     const userExists = await Auth.findOne({ email });
-    const assignedRole = email === "aliraza564257@gmail.com" ? "admin" : "user";
+    const assignedRole = "customer";
     if (userExists) {
       const filename = req.file.filename;
       const filePath = `uploads/${filename}`;
@@ -89,7 +89,7 @@ userRoutes.post(
     };
 
     const activationToken = createActivationToken(user);
-    const activationUrl = `http://localhost:3000/activation/${activationToken}`;
+    const activationUrl = `${process.env.CLIENT_URL}/activation/${activationToken}`;
 
     try {
       await sendEmail({
@@ -108,7 +108,7 @@ userRoutes.post(
   }
 );
 
-userRoutes.post("/create-new-product", uploadMultiple.array("files"), async (req, res, next) => {
+userRoutes.post("/create-new-product", isSeller, uploadMultiple.array("files"), async (req, res, next) => {
   const { name, subtitle, brand, descriptoion, category, price, stock, productIsNew } = req.body;
 
   try {
@@ -164,8 +164,8 @@ userRoutes.post(
       }
 
       const { name, email, password, avatar , role } = newUser;
-      let user = Auth.findOne({ email });
-      if (!user) {
+      let user = await Auth.findOne({ email });
+      if (user) {
         return next(new ErrorHandler("User already exists", 400));
       }
       user = await Auth.create({
@@ -173,7 +173,7 @@ userRoutes.post(
         email,
         password,
         avatar,
-        role
+        role: "customer"
       });
 
       sendToken(user, 201, res); // Pass the created user instance to sendToken

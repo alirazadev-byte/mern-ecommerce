@@ -1,43 +1,57 @@
-const Catachasyncerror = require("./Catachasyncerror");
 const jwt = require("jsonwebtoken");
+const Catachasyncerror = require("./Catachasyncerror");
 const Auth = require("../models/Auth");
-const dotenv = require("dotenv");
-dotenv.config({ path: "../confing/confing.env" });
+const Shop = require("../models/Shop");
+const ErrorHandler = require("../utils/Errorhandler");
 
 exports.isAuthenticated = Catachasyncerror(async (req, res, next) => {
-  const {token} = req.cookies // Extract the token from req.cookies
+  const token = req.cookies?.token;
 
-  console.log("Cookies:", token); // Log cookies for debugging
+  if (!token) {
+    return next(new ErrorHandler("Authentication required", 401));
+  }
+
   try {
-    if (!token) {
-      throw new Error("JWT must be provided");
-    }
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    req.user = await Auth.findById(decoded.id);
+    const user = await Auth.findById(decoded.id);
 
-    if (!req.user) {
-      console.log(`User not found for ID: ${decoded.id}`);
-      return res.status(401).json({ message: "Unauthorized" });
+    if (!user || !user.active) {
+      return next(new ErrorHandler("Authentication required", 401));
     }
 
-    // console.log("Authenticated user:", req.user);
+    req.user = user;
     next();
-  } catch (err) {
-    console.log("JWT verification error:", err.message);
-    return res.status(401).json({ message: "Unauthorized" });
+  } catch (error) {
+    return next(new ErrorHandler("Authentication required", 401));
   }
 });
 
-exports.isSeller = Catachasyncerror(async(req,res,next) => {
-  const {seller_token} = req.cookies;
-  if(!seller_token){
-      return next(new ErrorHandler("Please login to continue", 401));
+exports.authorizeRoles = (...roles) => (req, res, next) => {
+  if (!req.user || !roles.includes(req.user.role)) {
+    return next(new ErrorHandler("You are not authorized to access this resource", 403));
   }
 
-  const decoded = jwt.verify(seller_token, process.env.JWT_SECRET_KEY);
-
-  req.seller = await Shop.findById(decoded.id);
-
   next();
+};
+
+exports.isSeller = Catachasyncerror(async (req, res, next) => {
+  const sellerToken = req.cookies?.seller_token;
+
+  if (!sellerToken) {
+    return next(new ErrorHandler("Seller authentication required", 401));
+  }
+
+  try {
+    const decoded = jwt.verify(sellerToken, process.env.JWT_SECRET_KEY);
+    const seller = await Shop.findById(decoded.id);
+
+    if (!seller || !seller.active) {
+      return next(new ErrorHandler("Seller authentication required", 401));
+    }
+
+    req.seller = seller;
+    next();
+  } catch (error) {
+    return next(new ErrorHandler("Seller authentication required", 401));
+  }
 });

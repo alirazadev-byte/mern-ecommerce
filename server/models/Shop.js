@@ -5,8 +5,8 @@ const jwt = require("jsonwebtoken");
 const shopSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true, select: false },
     active: { type: Boolean, default: true },
     isAdmin: { type: Boolean, default: false },
     firstLogin: { type: Boolean, default: true },
@@ -16,7 +16,7 @@ const shopSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    role: { type: String, default: "user" },
+    role: { type: String, enum: ["vendor"], default: "vendor" },
   },
   { timestamps: true }
 );
@@ -29,7 +29,7 @@ shopSchema.methods.generateJWT = function () {
 // Hash Password
 shopSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
-    next();
+    return next();
   }
 
   this.password = await bcrypt.hash(this.password, 10);

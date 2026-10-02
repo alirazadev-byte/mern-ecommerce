@@ -1,14 +1,11 @@
-const sendShopToken = (user, statusCode, res) => {
-  const token = user.generateJWT();
-  const options = {
-    expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-    httpOnly: true,
-  };
+const cookieOptions = require("./cookieOptions");
 
-  res.status(statusCode).cookie("seller_token", token, options).json({
+const sendShopToken = (seller, statusCode, res) => {
+  const token = seller.generateJWT();
+
+  res.status(statusCode).cookie("seller_token", token, cookieOptions()).json({
     success: true,
-    user,
-    token,
+    user: seller,
   });
 };
 
