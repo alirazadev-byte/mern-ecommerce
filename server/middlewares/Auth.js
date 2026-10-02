@@ -3,6 +3,7 @@ const Catachasyncerror = require("./Catachasyncerror");
 const Auth = require("../models/Auth");
 const Shop = require("../models/Shop");
 const ErrorHandler = require("../utils/Errorhandler");
+const { ROLES, hasAllowedRole } = require("../authorization/roles");
 
 exports.isAuthenticated = Catachasyncerror(async (req, res, next) => {
   const token = req.cookies?.token;
@@ -27,7 +28,7 @@ exports.isAuthenticated = Catachasyncerror(async (req, res, next) => {
 });
 
 exports.authorizeRoles = (...roles) => (req, res, next) => {
-  if (!req.user || !roles.includes(req.user.role)) {
+  if (!hasAllowedRole(req.user, roles)) {
     return next(new ErrorHandler("You are not authorized to access this resource", 403));
   }
 
@@ -45,7 +46,7 @@ exports.isSeller = Catachasyncerror(async (req, res, next) => {
     const decoded = jwt.verify(sellerToken, process.env.JWT_SECRET_KEY);
     const seller = await Shop.findById(decoded.id);
 
-    if (!seller || !seller.active) {
+    if (!seller || !seller.active || seller.role !== ROLES.VENDOR) {
       return next(new ErrorHandler("Seller authentication required", 401));
     }
 

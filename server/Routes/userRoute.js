@@ -1,39 +1,24 @@
 // userRoutes.js
 const express = require("express");
-const multer = require("multer");
 const Auth = require("../models/Auth");
 const userRoutes = express.Router();
 const path = require("path");
 const { upload } = require("../multer");
 const fs = require("fs");
-const cloudinary = require("cloudinary").v2
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendMail");
 const sendToken = require("../utils/jwtToken");
 const asyncHandler = require("../middlewares/Catachasyncerror");
 const { error } = require("console");
 const ErrorHandler = require("../utils/Errorhandler");
-const { isAuthenticated, isSeller, authorizeRoles } = require("../middlewares/Auth");
+const { isAuthenticated, authorizeRoles } = require("../middlewares/Auth");
 const Catachasyncerror = require("../middlewares/Catachasyncerror");
-const Product = require("../models/ProductModel");
 // Create activation token
 const createActivationToken = (user) => {
   return jwt.sign(user, process.env.ACTIVATION_SECRET, {
     expiresIn: "7d",
   });
 };
-
-// Multer configuration for multiple file uploads
-const storage = multer.diskStorage({});
-const uploadMultiple = multer({ storage });
-
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
 
 // All Users Details
 userRoutes.get("/all-users-record", isAuthenticated, authorizeRoles("admin"), asyncHandler(async (req, res) => {
@@ -107,41 +92,6 @@ userRoutes.post(
     }
   }
 );
-
-userRoutes.post("/create-new-product", isSeller, uploadMultiple.array("files"), async (req, res, next) => {
-  const { name, subtitle, brand, descriptoion, category, price, stock, productIsNew } = req.body;
-
-  try {
-    // Upload multiple images to Cloudinary
-    const imageUploadPromises = req.files.map(file =>
-      cloudinary.uploader.upload(file.path, { folder: "products" })
-    );
-    const imageUploadResponses = await Promise.all(imageUploadPromises);
-
-    // Get the secure URLs of the uploaded images
-    const images = imageUploadResponses.map(response => response.secure_url);
-
-    // Create the product document
-    const product = new Product({
-      name,
-      subtitle,
-      brand,
-      descriptoion,
-      category,
-      price,
-      images,
-      stock,
-      productIsNew,
-    });
-
-    await product.save();
-
-    res.status(201).json({ success: true, product });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
 
 // Route to activate user account
 userRoutes.post(

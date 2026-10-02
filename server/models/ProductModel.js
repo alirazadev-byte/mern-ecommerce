@@ -2,6 +2,12 @@ const  mongoose =  require ("mongoose");
 
 const productSchema = new mongoose.Schema(
   {
+    vendor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Shop",
+      index: true,
+      immutable: true,
+    },
     name: {
       type: String,
       required: true,
