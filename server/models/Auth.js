@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { ROLES } = require("../authorization/roles");
 
 const authSchema = new mongoose.Schema(
   {
@@ -38,8 +39,8 @@ const authSchema = new mongoose.Schema(
     ],
     role: {
       type: String,
-      enum: ["customer", "admin"],
-      default: "customer",
+      enum: [ROLES.CUSTOMER, ROLES.ADMIN],
+      default: ROLES.CUSTOMER,
     },
   },
   { timestamps: true }

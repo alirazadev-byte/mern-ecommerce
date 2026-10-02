@@ -4,7 +4,8 @@
   "description": "",
   "main": "indx.js",
   "scripts": {
-    "start": "nodemon server.js"
+    "start": "nodemon server.js",
+    "test:vendor-ownership": "node --test tests/vendorProductService.test.js tests/vendorProductValidation.test.js tests/roleAuthorization.test.js"
   },
   "keywords": [],
   "author": "",

@@ -13,6 +13,15 @@ const Shop = require("../models/Shop");
 const shoprouter = express.Router();
 const bcrypt = require("bcrypt");
 const sendShopToken = require("../utils/shopToken");
+const multer = require("multer");
+const {
+  createVendorProduct,
+  listVendorProducts,
+  updateVendorProduct,
+  deleteVendorProduct,
+} = require("../controller/vendorProductController");
+
+const productUpload = multer({ storage: multer.diskStorage({}) });
 // create shop
 // Create shop
 shoprouter.post(
@@ -170,5 +179,15 @@ shoprouter.post(
     }
   })
 );
+
+shoprouter.post(
+  "/create-new-product",
+  isSeller,
+  productUpload.array("files"),
+  createVendorProduct
+);
+shoprouter.get("/vendor/products", isSeller, listVendorProducts);
+shoprouter.put("/vendor/products/:id", isSeller, updateVendorProduct);
+shoprouter.delete("/vendor/products/:id", isSeller, deleteVendorProduct);
 
 module.exports = shoprouter;
