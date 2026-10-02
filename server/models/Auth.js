@@ -5,8 +5,8 @@ const jwt = require("jsonwebtoken");
 const authSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true, select: false },
     active: { type: Boolean, default: true },
     isAdmin: { type: Boolean, default: false },
     firstLogin: { type: Boolean, default: true },
@@ -38,7 +38,8 @@ const authSchema = new mongoose.Schema(
     ],
     role: {
       type: String,
-      // default: "user",
+      enum: ["customer", "admin"],
+      default: "customer",
     },
   },
   { timestamps: true }
@@ -53,7 +54,7 @@ authSchema.methods.generateJWT = function () {
 // Hash Password
 authSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
-    next();
+    return next();
   }
 
   this.password = await bcrypt.hash(this.password, 10);

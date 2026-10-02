@@ -3,7 +3,7 @@ const cors = require("cors");
 const app = express();
 const dotenv = require("dotenv");
 dotenv.config({ path: "./confing/confing.env" });
-const port = process.env.PORT;
+const port = process.env.PORT || 8000;
 const morgan = require("morgan");
 const DBconfing = require("./confing/dbconfing.js");
 const Errorhandler = require("./middlewares/error.js");
@@ -11,14 +11,25 @@ const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 app.use(morgan("dev"));
-app.use(express.json());
+app.disable("x-powered-by");
+app.use(express.json({ limit: "1mb" }));
+
+const allowedOrigins = (process.env.CORS_ORIGINS || process.env.CLIENT_URL || "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: "http://localhost:3000", // frontend URL
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Origin not allowed by CORS"));
+  },
   credentials: true,
 }));
 app.use("/" , express.static("uploads"))
-app.use(bodyParser.urlencoded( { extended: true } ));
-app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "1mb" }));
 
 
 

@@ -45,7 +45,7 @@ shoprouter.post(
           zipCode: req.body.zipCode,
         };
         const activationToken = createActivationToken(seller);
-        const activationUrl = `http://localhost:3000/seller/activation/${activationToken}`;
+        const activationUrl = `${process.env.CLIENT_URL}/seller/activation/${activationToken}`;
 
         try {
           await sendEmail({
@@ -120,8 +120,8 @@ shoprouter.post(
 
       const { name, email, password, avatar, address, zipCode, phonenumber } =
         newSeller;
-      let seller = Shop.findOne({ email });
-      if (!seller) {
+      let seller = await Shop.findOne({ email });
+      if (seller) {
         return next(new ErrorHandler("User already exists", 400));
       }
       seller = await Shop.create({
