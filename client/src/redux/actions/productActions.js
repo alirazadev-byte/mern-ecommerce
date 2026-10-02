@@ -8,14 +8,13 @@ import {
   setSingleProduct,
   setReview,
 } from "../slices/product";
-import axios from "axios";
+import { getCatalog, getCatalogProduct } from "../../api/catalog";
 
 export const fetchProducts = (page) => async (dispatch) => {
   dispatch(setLoading());
 
   try {
-    const { data } = await axios.get(`http://localhost:9000/api/v1/fetchProducts/${page}/${12}`);
-    const { products, pagination } = data;
+    const { products, pagination } = await getCatalog(page, 12);
     dispatch(setProducts(products));
     dispatch(setPagination(pagination));
   } catch (error) {
@@ -35,8 +34,7 @@ export const fetchAdminProducts = (page) => async (dispatch) => {
   dispatch(setLoading());
 
   try {
-    const { data } = await axios.get(`http://localhost:9000/api/v1/fetchProducts/${page}/${6}`);
-    const { products, pagination } = data;
+    const { products, pagination } = await getCatalog(page, 6);
     dispatch(setProducts(products));
     dispatch(setPagination(pagination));
   } catch (error) {
@@ -57,11 +55,7 @@ export const fetchProductById = (productId) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    const { data } = await axios.get(
-      `http://localhost:9000/api/v1/find/${productId}`
-    );
-
-    const product = data;
+    const product = await getCatalogProduct(productId);
     console.log(product);
     dispatch(setSingleProduct(product));
     dispatch(setLoading(false));

@@ -19,6 +19,8 @@ const {
   listVendorProducts,
   updateVendorProduct,
   deleteVendorProduct,
+  updateVendorInventory,
+  getVendorInventory,
 } = require("../controller/vendorProductController");
 
 const productUpload = multer({ storage: multer.diskStorage({}) });
@@ -189,5 +191,7 @@ shoprouter.post(
 shoprouter.get("/vendor/products", isSeller, listVendorProducts);
 shoprouter.put("/vendor/products/:id", isSeller, updateVendorProduct);
 shoprouter.delete("/vendor/products/:id", isSeller, deleteVendorProduct);
+shoprouter.get("/vendor/inventory", isSeller, getVendorInventory);
+shoprouter.put("/vendor/inventory/:productId", isSeller, updateVendorInventory);
 
 module.exports = shoprouter;
