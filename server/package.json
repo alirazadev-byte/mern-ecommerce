@@ -10,8 +10,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:vendor-ownership": "tsx --test tests/vendorProductService.test.js tests/vendorProductValidation.test.js tests/roleAuthorization.test.js",
     "test:catalog": "tsx --test tests/catalogValidation.test.ts tests/catalogQueryShape.test.ts",
-    "test": "tsx --test tests/vendorProductService.test.js tests/vendorProductValidation.test.js tests/roleAuthorization.test.js tests/catalogValidation.test.ts tests/catalogQueryShape.test.ts",
-    "migrate:catalog": "tsx scripts/migrateCatalogInventory.ts"
+    "test": "tsx --test tests/vendorProductService.test.js tests/vendorProductValidation.test.js tests/roleAuthorization.test.js tests/catalogValidation.test.ts tests/catalogQueryShape.test.ts tests/commerceValidation.test.ts tests/commerceStateMachine.test.ts tests/checkoutAuthority.test.ts tests/stripeWebhook.test.ts",
+    "migrate:catalog": "tsx scripts/migrateCatalogInventory.ts",
+    "test:commerce": "tsx --test tests/commerceValidation.test.ts tests/commerceStateMachine.test.ts tests/checkoutAuthority.test.ts tests/stripeWebhook.test.ts",
+    "test:commerce:integration": "tsx --test tests/commerce.integration.test.ts",
+    "commerce:release-expired": "tsx scripts/releaseExpiredReservations.ts",
+    "commerce:legacy-report": "tsx scripts/reportLegacyOrders.ts"
   },
   "keywords": [],
   "author": "",
@@ -50,5 +54,6 @@
     "@types/bcrypt": "^5.0.2",
     "@types/body-parser": "^1.19.5",
     "@types/multer": "^1.4.12"
-  }
+  },
+  "packageManager": "pnpm@12.8.1"
 }

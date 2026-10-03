@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
 import Product = require("../models/ProductModel");
-import Order = require("../models/order");
 import ErrorHandler = require("../utils/Errorhandler");
 import { getPublicProduct, listPublicCatalog } from "../services/catalogService";
 import { parseCatalogQuery } from "../validation/catalogValidation";
@@ -33,7 +32,6 @@ export async function productReview(req: Request, res: Response) {
   product.reviewCount = product.reviews.length;
   product.ratings = product.reviewCount ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviewCount : 0;
   await product.save({ validateBeforeSave: false });
-  void Order.findByIdAndUpdate;
   return res.status(201).json({ message: "Review added successfully" });
 }
 
