@@ -3,6 +3,7 @@ import Product = require("../models/ProductModel");
 import Inventory = require("../models/Inventory");
 import type { VendorProductCreateInput, VendorProductUpdateInput } from "../validation/catalogValidation";
 import { createInventory } from "./inventoryService";
+import { withTransaction } from "./transactionService";
 
 type ProductModelLike = typeof Product;
 type InventoryModelLike = typeof Inventory;
@@ -21,12 +22,21 @@ export class VendorProductService {
 
   async create(vendorId: Types.ObjectId, input: VendorProductCreateInput) {
     const { stock, ...productInput } = input;
-    const product = await this.productModel.create({
+    const payload = {
       ...productInput,
       vendor: vendorId,
       slug: `${slugify(input.name)}-${new Types.ObjectId().toString().slice(-6)}`,
       category: input.category.toLowerCase(),
-    });
+    };
+    if (this.productModel === Product && this.inventoryModel === Inventory && this.inventoryCreator === createInventory) {
+      return withTransaction(async (session) => {
+        const [product] = await this.productModel.create([payload], { session });
+        if (!product) throw new Error("Product was not created");
+        const inventory = await this.inventoryCreator(product._id, vendorId, input.name, stock, session);
+        return { product, inventory };
+      });
+    }
+    const product = await this.productModel.create(payload);
     try {
       const inventory = await this.inventoryCreator(product._id, vendorId, input.name, stock);
       return { product, inventory };
@@ -59,6 +69,13 @@ export class VendorProductService {
   }
 
   async deleteOwned(vendorId: Types.ObjectId, productId: string) {
+    if (this.productModel === Product && this.inventoryModel === Inventory) {
+      return withTransaction(async (session) => {
+        const product = await this.productModel.findOneAndDelete({ _id: productId, vendor: vendorId }, { session });
+        if (product) await this.inventoryModel.deleteOne({ product: product._id, vendor: vendorId }, { session });
+        return product;
+      });
+    }
     const product = await this.productModel.findOneAndDelete({ _id: productId, vendor: vendorId });
     if (product) await this.inventoryModel.deleteOne({ product: product._id, vendor: vendorId });
     return product;

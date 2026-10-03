@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import type { Types } from "mongoose";
+import type { ClientSession, Types } from "mongoose";
 import Inventory = require("../models/Inventory");
 import Product = require("../models/ProductModel");
 import { INVENTORY_STATUSES } from "../domain/catalog";
@@ -9,14 +9,18 @@ function makeSku(productName: string): string {
   return `${prefix}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
-export async function createInventory(productId: Types.ObjectId, vendorId: Types.ObjectId, productName: string, quantity: number) {
-  return Inventory.create({
+export async function createInventory(productId: Types.ObjectId, vendorId: Types.ObjectId, productName: string, quantity: number, session?: ClientSession) {
+  const payload = {
     product: productId,
     vendor: vendorId,
     sku: makeSku(productName),
     quantity,
     status: quantity > 0 ? INVENTORY_STATUSES.AVAILABLE : INVENTORY_STATUSES.UNAVAILABLE,
-  });
+  };
+  if (!session) return Inventory.create(payload);
+  const [inventory] = await Inventory.create([payload], { session });
+  if (!inventory) throw new Error("Inventory was not created");
+  return inventory;
 }
 
 export async function setOwnedQuantity(vendorId: string, productId: string, quantity: number) {

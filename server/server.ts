@@ -3,16 +3,20 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import bodyParser from "body-parser";
+import { stripeWebhook } from "./controller/stripeWebhookController";
+import { startReservationCleanup } from "./services/reservationCleanupService";
 import { env } from "./config/env";
 import { connectDatabase } from "./confing/dbconfing";
 
 const Productroute = require("./Routes/productRoute");
 const userroute = require("./Routes/userRoute");
 const shoprouter = require("./Routes/shopRoute");
-const payment = require("./Routes/Payment");
+const commerce = require("./Routes/commerceRoute");
 const Errorhandler = require("./middlewares/error");
 
 export const app = express();
+
+app.post("/api/v2/payments/webhook", express.raw({ type: "application/json" }), stripeWebhook);
 
 app.use(cookieParser());
 app.use(morgan("dev"));
@@ -31,11 +35,12 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "1mb" }));
 app.use("/api/v2", userroute);
 app.use("/api/v1", Productroute);
 app.use("/api/v2", shoprouter);
-app.use("/api/v2", payment);
+app.use("/api/v2", commerce);
 app.use(Errorhandler);
 
 async function start() {
   await connectDatabase(env.databaseUrl);
+  startReservationCleanup();
   app.listen(env.port, () => {
     console.log(`Backend server is running on port ${env.port}`);
   });
